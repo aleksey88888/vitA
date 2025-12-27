@@ -1,31 +1,62 @@
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
+import pygame
+import random
 
-# 1. Задаем цвета в разных форматах
-colors = {
-    "Red (Name)": "red",
-    "Green (HEX)": "#2ECC71",
-    "Blue (RGB)": (0.2, 0.4, 0.8),  # В matplotlib RGB от 0 до 1
-    "Custom Orange": "#E67E22",
-    "Purple": "#9B59B6"
-}
+# Инициализация
+pygame.init()
 
-# 2. Создаем график для визуализации
-fig, ax = plt.subplots(figsize=(8, 4))
-ax.set_xlim(0, len(colors))
-ax.set_ylim(0, 1)
+# Настройки экрана
+WIDTH, HEIGHT = 1200, 800
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Matrix Code Rain 2025")
 
-# 3. Рисуем прямоугольники с этими цветами
-for i, (name, color) in enumerate(colors.items()):
-    # Рисуем цветной блок
-    rect = patches.Rectangle((i, 0), 1, 1, color=color)
-    ax.add_patch(rect)
-    # Добавляем подпись
-    ax.text(i + 0.5, 0.5, name, color='white', weight='bold',
-            ha='center', va='center', fontsize=10, bbox=dict(facecolor='black', alpha=0.3))
+# Цвета и символы
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 70)
+FONT_SIZE = 18
 
-# Убираем оси
-ax.set_xticks([])
-ax.set_yticks([])
-plt.title("Визуализация цветов в Python", fontsize=14)
-plt.show()
+# Список символов (катакана, цифры, латынь)
+chars = "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズヅブプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+font = pygame.font.SysFont('ms gothic', FONT_SIZE)
+
+# Настройка колонок
+column_width = FONT_SIZE
+columns = WIDTH // column_width
+# Начальные позиции Y для каждой колонки (за границей экрана)
+drops = [random.randint(-100, 0) for _ in range(columns)]
+
+clock = pygame.time.Clock()
+
+running = True
+while running:
+    # 1. Проверка событий (выход)
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # 2. Полупрозрачная заливка для эффекта "шлейфа"
+    surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    surface.fill((0, 0, 0, 25))  # Число 25 — это прозрачность (чем меньше, тем длиннее хвост)
+    screen.blit(surface, (0, 0))
+
+    # 3. Рисование символов
+    for i in range(len(drops)):
+        # Выбираем случайный символ
+        char = random.choice(chars)
+        char_render = font.render(char, True, GREEN)
+
+        # Позиция символа
+        x = i * column_width
+        y = drops[i] * FONT_SIZE
+
+        screen.blit(char_render, (x, y))
+
+        # Сбрасываем колонку вниз или возвращаем наверх с шансом
+        if y > HEIGHT and random.random() > 0.975:
+            drops[i] = 0
+
+        drops[i] += 1
+
+    pygame.display.flip()
+    clock.tick(30)  # Скорость обновления (FPS)
+
+pygame.quit()
