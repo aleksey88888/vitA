@@ -5,14 +5,15 @@ import random
 pygame.init()
 
 # Настройки экрана
-WIDTH, HEIGHT = 1200, 800
+WIDTH, HEIGHT = 1200, 900
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Matrix Code Rain 2025")
 
 # Цвета и символы
 BLACK = (0, 111, 0)
+BLUE = (0, 255, 70)
 GREEN = (0, 255, 70)
-FONT_SIZE = 18
+FONT_SIZE = 9
 
 # Список символов (катакана, цифры, латынь)
 chars = "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズヅブプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -21,8 +22,8 @@ font = pygame.font.SysFont('ms gothic', FONT_SIZE)
 # Настройка колонок
 column_width = FONT_SIZE
 columns = WIDTH // column_width
-# Начальные позиции Y для каждой колонки (за границей экрана)
-drops = [random.randint(-100, 0) for _ in range(columns)]
+# Начальные позиции Y для каждой колонки (в низу)
+drops = [random.randint(100, 1000) for _ in range(columns)]
 
 clock = pygame.time.Clock()
 
@@ -35,7 +36,7 @@ while running:
 
     # 2. Полупрозрачная заливка для эффекта "шлейфа"
     surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-    surface.fill((0, 0, 0, 25))  # Число 25 — это прозрачность (чем меньше, тем длиннее хвост)
+    surface.fill((45, 10, 0, 25))  # Число 25 — это прозрачность (чем меньше, тем длиннее хвост)
     screen.blit(surface, (0, 0))
 
     # 3. Рисование символов
@@ -54,7 +55,7 @@ while running:
         if y > HEIGHT and random.random() > 0.975:
             drops[i] = 0
 
-        drops[i] += 1
+        drops[i] += -2
 
     pygame.display.flip()
     clock.tick(30)  # Скорость обновления (FPS)
