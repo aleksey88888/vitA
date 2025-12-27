@@ -4,7 +4,7 @@ def main():
         num1 = float(input("Введите первое число: "))
         num2 = float(input("Введите второе число: "))
         
-        result = num1 + num2
+        result = num1 * num2
         
         # Используем f-строку для вывода (доступно в современном Python)
         print(f"Результат: {num1} + {num2} = {result}")
