@@ -1,0 +1,307 @@
+import tkinter as tk
+import random
+
+class MatrixGame:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Matrix Dodge 2025")
+        self.root.resizable(False, False)
+
+        # Параметры
+        self.width = 500
+        self.height = 600
+        self.score = 0
+        self.game_over = False
+
+        # Создание холста
+        self.canvas = tk.Canvas(root, width=self.width, height=self.height, bg="black", highlightthickness=0)
+        self.canvas.pack()
+
+        # Игрок (Муравей-хакер)
+        self.player_size = 20
+        self.player = self.canvas.create_rectangle(
+            self.width//2, self.height-50,
+            self.width//2 + self.player_size, self.height-50 + self.player_size,
+            fill="#00FF00", outline="#008800"
+        )
+
+        # Список врагов (символы кода)
+        self.enemies = []
+        self.enemy_speed = 5
+        self.spawn_rate = 15 # Чем меньше, тем чаще
+
+        # Управление
+        self.root.bind("<Left>", lambda e: self.move(-25))
+        self.root.bind("<Right>", lambda e: self.move(25))
+
+        self.update()
+
+    def move(self, dx):
+        if not self.game_over:
+            coords = self.canvas.coords(self.player)
+            if 0 <= coords[0] + dx <= self.width - self.player_size:
+                self.canvas.move(self.player, dx, 0)
+
+    def spawn_enemy(self):
+        if random.randint(1, self.spawn_rate) == 1:
+            x = random.randint(0, self.width - 20)
+            char = random.choice(["0", "1", "x", "y", "Δ", "Ω"])
+            enemy = self.canvas.create_text(x, -20, text=char, fill="white", font=("Courier", 16, "bold"))
+            self.enemies.append(enemy)
+
+    def update(self):
+        if not self.game_over:
+            self.spawn_enemy()
+
+            # Движение врагов
+            for enemy in self.enemies[:]:
+                self.canvas.move(enemy, 0, self.enemy_speed)
+                coords = self.canvas.coords(enemy)
+
+                # Проверка столкновения
+                player_coords = self.canvas.coords(self.player)
+                if (player_coords[0] < coords[0] < player_coords[2] and
+                    player_coords[1] < coords[1] < player_coords[3]):
+                    self.end_game()
+
+                # Удаление за границей
+                if coords[1] > self.height:
+                    self.canvas.delete(enemy)
+                    self.enemies.remove(enemy)
+                    self.score += 1
+                    if self.score % 10 == 0: # Ускорение каждые 10 очков
+                        self.enemy_speed += 0.5
+
+            self.root.after(30, self.update)
+
+    def end_game(self):
+        self.game_over = True
+        self.canvas.create_text(
+            self.width//2, self.height//2,
+            text=f"GAME OVER\nScore: {self.score}",
+            fill="#00FF00", font=("Courier", 30, "bold"), justify="center"
+        )
+        self.canvas.create_text(
+            self.width//2, self.height//2 + 80,
+            text="Press F5 to restart",
+            fill="white", font=("Courier", 12)
+        )
+
+# Запуск
+if __name__ == "__main__":
+    root = tk.Tk()
+    game = MatrixGame(root)
+    root.mainloop()
+import pygame
+import sys
+
+# Инициализация
+pygame.init()
+
+# Настройки экрана
+WIDTH, HEIGHT = 600, 600
+TILE_SIZE = 60
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Snail Matrix Mover 2025")
+
+# Цвета (стиль Матрицы)
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 65)
+DARK_GREEN = (0, 50, 0)
+WHITE = (255, 255, 255)
+
+# Состояние игры
+# 0 - пусто, 1 - стена, 2 - блок данных, 3 - терминал (цель)
+game_map = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 3, 1],
+    [1, 0, 2, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 1, 0, 0, 0, 1],
+    [1, 0, 0, 2, 0, 0, 0, 2, 0, 1],
+    [1, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+    [1, 0, 2, 0, 0, 0, 0, 0, 0, 1],
+    [1, 3, 0, 0, 0, 0, 0, 3, 0, 1],
+    [1, 3, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+]
+
+snail_pos = [1, 1] # x, y
+
+def draw_map():
+    for y, row in enumerate(game_map):
+        for x, tile in enumerate(row):
+            rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            if tile == 1: # Стена
+                pygame.draw.rect(screen, DARK_GREEN, rect.inflate(-2, -2))
+            elif tile == 2: # Блок данных
+                pygame.draw.rect(screen, GREEN, rect.inflate(-10, -10), 2)
+                pygame.draw.rect(screen, GREEN, rect.inflate(-30, -30))
+            elif tile == 3: # Терминал
+                pygame.draw.rect(screen, WHITE, rect.inflate(-20, -20), 1)
+
+def draw_snail():
+    x, y = snail_pos[0] * TILE_SIZE, snail_pos[1] * TILE_SIZE
+    # Тело улитки
+    pygame.draw.ellipse(screen, GREEN, (x+10, y+25, 40, 20))
+    # Раковина (спираль)
+    pygame.draw.circle(screen, GREEN, (x+30, y+25), 18, 2)
+    pygame.draw.circle(screen, GREEN, (x+30, y+25), 10, 1)
+    # Рожки
+    pygame.draw.line(screen, GREEN, (x+45, y+25), (x+50, y+10), 2)
+    pygame.draw.line(screen, GREEN, (x+40, y+25), (x+42, y+10), 2)
+
+def move_snail(dx, dy):
+    new_x = snail_pos[0] + dx
+    new_y = snail_pos[1] + dy
+
+    # Проверка столкновения со стеной
+    if game_map[new_y][new_x] == 1:
+        return
+
+    # Проверка столкновения с блоком
+    if game_map[new_y][new_x] == 2:
+        box_new_x = new_x + dx
+        box_new_y = new_y + dy
+        # Если за блоком пусто или терминал — толкаем
+        if game_map[box_new_y][box_new_x] in [0, 3]:
+            game_map[new_y][new_x] = 0
+            game_map[box_new_y][box_new_x] = 2
+        else:
+            return
+
+    snail_pos[0], snail_pos[1] = new_x, new_y
+
+# Главный цикл
+while True:
+    screen.fill(BLACK)
+    draw_map()
+    draw_snail()
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP:    move_snail(0, -1)
+            if event.key == pygame.K_DOWN:  move_snail(0, 1)
+            if event.key == pygame.K_LEFT:  move_snail(-1, 0)
+            if event.key == pygame.K_RIGHT: move_snail(1, 0)
+
+    pygame.display.flip()
+import pygame
+import random
+
+# Инициализация
+pygame.init()
+
+# Константы
+SCREEN_WIDTH, SCREEN_HEIGHT = 400, 600
+GRID_SIZE = 30
+COLUMNS = SCREEN_WIDTH // GRID_SIZE
+ROWS = SCREEN_HEIGHT // GRID_SIZE
+
+# Цвета Матрицы
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 70)
+DARK_GREEN = (0, 50, 0)
+
+# Фигуры (Тетрамино)
+SHAPES = [
+    [[1, 1, 1, 1]], # I
+    [[1, 1], [1, 1]], # O
+    [[1, 1, 0], [0, 1, 1]], # S
+    [[0, 1, 1], [1, 1, 0]], # Z
+    [[1, 1, 1], [0, 1, 0]], # T
+    [[1, 1, 1], [1, 0, 0]], # L
+    [[1, 1, 1], [0, 0, 1]]  # J
+]
+
+class Tetris:
+    def __init__(self):
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        pygame.display.set_caption("MATRIX TETRIS 2025")
+        self.grid = [[BLACK for _ in range(COLUMNS)] for _ in range(ROWS)]
+        self.new_piece()
+        self.score = 0
+        self.clock = pygame.time.Clock()
+
+    def new_piece(self):
+        self.piece = random.choice(SHAPES)
+        self.piece_x = COLUMNS // 2 - len(self.piece[0]) // 2
+        self.piece_y = 0
+        if self.check_collision(self.piece_x, self.piece_y):
+            self.__init__() # Рестарт при проигрыше
+
+    def check_collision(self, x, y, piece=None):
+        piece = piece or self.piece
+        for r, row in enumerate(piece):
+            for c, val in enumerate(row):
+                if val:
+                    if (y + r >= ROWS or x + c < 0 or x + c >= COLUMNS or
+                        self.grid[y + r][x + c] != BLACK):
+                        return True
+        return False
+
+    def rotate_piece(self):
+        new_piece = [list(row) for row in zip(*self.piece[::-1])]
+        if not self.check_collision(self.piece_x, self.piece_y, new_piece):
+            self.piece = new_piece
+
+    def lock_piece(self):
+        for r, row in enumerate(self.piece):
+            for c, val in enumerate(row):
+                if val:
+                    self.grid[self.piece_y + r][self.piece_x + c] = GREEN
+        self.clear_lines()
+        self.new_piece()
+
+    def clear_lines(self):
+        new_grid = [row for row in self.grid if any(cell == BLACK for cell in row)]
+        cleared = ROWS - len(new_grid)
+        self.score += cleared * 100
+        for _ in range(cleared):
+            new_grid.insert(0, [BLACK for _ in range(COLUMNS)])
+        self.grid = new_grid
+
+    def run(self):
+        fall_time = 0
+        while True:
+            self.screen.fill(BLACK)
+            fall_speed = 500 # мс
+            fall_time += self.clock.get_rawtime()
+            self.clock.tick()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT: return
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT and not self.check_collision(self.piece_x - 1, self.piece_y):
+                        self.piece_x -= 1
+                    if event.key == pygame.K_RIGHT and not self.check_collision(self.piece_x + 1, self.piece_y):
+                        self.piece_x += 1
+                    if event.key == pygame.K_DOWN and not self.check_collision(self.piece_x, self.piece_y + 1):
+                        self.piece_y += 1
+                    if event.key == pygame.K_UP:
+                        self.rotate_piece()
+
+            if fall_time >= fall_speed:
+                if not self.check_collision(self.piece_x, self.piece_y + 1):
+                    self.piece_y += 1
+                else:
+                    self.lock_piece()
+                fall_time = 0
+
+            # Отрисовка сетки
+            for y, row in enumerate(self.grid):
+                for x, color in enumerate(row):
+                    pygame.draw.rect(self.screen, color, (x*GRID_SIZE, y*GRID_SIZE, GRID_SIZE-1, GRID_SIZE-1))
+
+            # Отрисовка падающей фигуры
+            for r, row in enumerate(self.piece):
+                for c, val in enumerate(row):
+                    if val:
+                        pygame.draw.rect(self.screen, GREEN, ((self.piece_x + c)*GRID_SIZE, (self.piece_y + r)*GRID_SIZE, GRID_SIZE-1, GRID_SIZE-1))
+
+            pygame.display.flip()
+
+if __name__ == "__main__":
+    Tetris().run()
